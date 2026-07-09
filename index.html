@@ -273,10 +273,7 @@
         async function syncSaveToServer() {
             if (!Sync.enabled) return false;
             try {
-                const payload = {
-                    datasetId: Sync.datasetId,
-                    database
-                };
+                const payload = { datasetId: Sync.datasetId, database };
                 const res = await fetch(`${Sync.apiBaseUrl}/datasets/${encodeURIComponent(Sync.datasetId)}`, {
                     method: 'PUT',
                     headers: {
