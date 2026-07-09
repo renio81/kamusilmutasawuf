@@ -3,6 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="api-base-url" content="">
+    <meta name="api-token" content="">
+    <meta name="sync-enabled" content="false">
+    <meta name="dataset-id" content="tasawuf_db">
+    <meta name="app-version" content="1.0.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
     <title>Kamus Lengkap Ilmu Tasawuf</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@700;800&family=Amiri:wght@400;700&display=swap" rel="stylesheet">
@@ -230,29 +238,99 @@
         let hikmahIndex = 0;
         let mobileMenuOpen = false;
 
+        const Sync = {
+            apiBaseUrl: '',
+            apiToken: '',
+            enabled: false,
+            datasetId: 'tasawuf_db'
+        };
+
+        function getMeta(name, fallback = '') {
+            const el = document.querySelector(`meta[name="${name}"]`);
+            return el ? (el.getAttribute('content') || fallback) : fallback;
+        }
+
+        function initSyncConfig() {
+            Sync.apiBaseUrl = getMeta('api-base-url', '').replace(/\/$/, '');
+            Sync.apiToken = getMeta('api-token', '');
+            Sync.enabled = (getMeta('sync-enabled', 'false') === 'true') && !!Sync.apiBaseUrl;
+            Sync.datasetId = getMeta('dataset-id', 'tasawuf_db');
+        }
+
+        async function syncLoadFromServer() {
+            if (!Sync.enabled) return null;
+            try {
+                const res = await fetch(`${Sync.apiBaseUrl}/datasets/${encodeURIComponent(Sync.datasetId)}`, {
+                    headers: Sync.apiToken ? { 'Authorization': `Bearer ${Sync.apiToken}` } : {}
+                });
+                if (!res.ok) return null;
+                return await res.json();
+            } catch (e) {
+                return null;
+            }
+        }
+
+        async function syncSaveToServer() {
+            if (!Sync.enabled) return false;
+            try {
+                const payload = {
+                    datasetId: Sync.datasetId,
+                    database
+                };
+                const res = await fetch(`${Sync.apiBaseUrl}/datasets/${encodeURIComponent(Sync.datasetId)}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        ...(Sync.apiToken ? { 'Authorization': `Bearer ${Sync.apiToken}` } : {})
+                    },
+                    body: JSON.stringify(payload)
+                });
+                return res.ok;
+            } catch (e) {
+                return false;
+            }
+        }
+
+        async function hydrateDatabase() {
+            const remote = await syncLoadFromServer();
+            if (remote && remote.database && Array.isArray(remote.database.istilah)) {
+                database = {
+                    istilah: Array.isArray(remote.database.istilah) ? remote.database.istilah : [],
+                    kategori: Array.isArray(remote.database.kategori) ? remote.database.kategori : [],
+                    kitab: Array.isArray(remote.database.kitab) ? remote.database.kitab : [],
+                    ulama: Array.isArray(remote.database.ulama) ? remote.database.ulama : []
+                };
+                localStorage.setItem(storageKey, JSON.stringify(database));
+                return;
+            }
+            const saved = localStorage.getItem(storageKey);
+            if (saved) {
+                try {
+                    const parsed = JSON.parse(saved);
+                    database = {
+                        istilah: Array.isArray(parsed.istilah) ? parsed.istilah : [],
+                        kategori: Array.isArray(parsed.kategori) ? parsed.kategori : [],
+                        kitab: Array.isArray(parsed.kitab) ? parsed.kitab : [],
+                        ulama: Array.isArray(parsed.ulama) ? parsed.ulama : []
+                    };
+                    return;
+                } catch (e) {}
+            }
+            database = { istilah: [...defaultData], kategori: [], kitab: [], ulama: [] };
+        }
+
         function toggleMobileMenu() {
             mobileMenuOpen = !mobileMenuOpen;
             document.getElementById('mobileMenu').classList.toggle('hidden', !mobileMenuOpen);
         }
 
         function loadDatabase() {
-            try {
-                const saved = localStorage.getItem(storageKey);
-                if (saved) {
-                    const parsed = JSON.parse(saved);
-                    return {
-                        istilah: Array.isArray(parsed.istilah) ? parsed.istilah : [],
-                        kategori: Array.isArray(parsed.kategori) ? parsed.kategori : [],
-                        kitab: Array.isArray(parsed.kitab) ? parsed.kitab : [],
-                        ulama: Array.isArray(parsed.ulama) ? parsed.ulama : []
-                    };
-                }
-            } catch (e) {}
             return { istilah: [...defaultData], kategori: [], kitab: [], ulama: [] };
         }
 
         function saveDatabase() {
             localStorage.setItem(storageKey, JSON.stringify(database));
+            syncSaveToServer();
         }
 
         function syncCollections() {
@@ -590,7 +668,7 @@
             const file = e.target.files[0];
             if (!file) return;
             const reader = new FileReader();
-            reader.onload = function(ev) {
+            reader.onload = async function(ev) {
                 const text = ev.target.result || '';
                 const parsed = parseRawHtmlData(text);
                 if (parsed.length) {
@@ -601,7 +679,8 @@
                     currentPage = 1;
                     renderAll();
                     saveDatabase();
-                    alert('Data berhasil ditambahkan dan disimpan lokal.');
+                    await syncSaveToServer();
+                    alert('Data berhasil ditambahkan dan disimpan.');
                 } else {
                     alert('Data tidak terbaca. Pastikan format tabel HTML Anda benar.');
                 }
@@ -678,11 +757,17 @@
 
         function escapeQuotes(text) { return String(text).replace(/'/g, "\\'"); }
 
-        window.addEventListener('load', () => {
+        window.addEventListener('load', async () => {
+            initSyncConfig();
+            await hydrateDatabase();
             syncCollections();
+            filteredBase = [...database.istilah];
+            currentPage = 1;
+            kitabPage = 1;
             renderAll();
             document.getElementById('csvInput').addEventListener('change', handleFileImport);
             startHikmahSlide();
+            if (Sync.enabled) syncSaveToServer();
         });
     </script>
 </body>
