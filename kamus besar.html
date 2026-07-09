@@ -1,0 +1,664 @@
+<!DOCTYPE html>
+<html lang="id" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kamus Lengkap Ilmu Tasawuf</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@700;800&family=Amiri:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#0F6D47',
+                        secondary: '#2C8C63',
+                        accent: '#D4AF37',
+                        cream: '#F8F6F1',
+                        dark: '#1a1a1a'
+                    },
+                    borderRadius: { '3xl': '24px' },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        serif: ['Playfair Display', 'serif'],
+                        arabic: ['Amiri', 'serif']
+                    }
+                }
+            },
+            darkMode: 'class'
+        }
+    </script>
+    <style>
+        .glass-card { background: rgba(255, 255, 255, 0.8); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.2); }
+        .islamic-pattern { background-image: url('https://www.transparenttextures.com/patterns/islamic-art.png'); }
+        .hero-gradient { background: linear-gradient(135deg, #0F6D47 0%, #2C8C63 100%); }
+        .arabic-text { font-family: 'Amiri', serif; line-height: 2.2; }
+        .custom-shadow { box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.05); }
+        input:focus { outline: none; border-color: #D4AF37; }
+        .fade-item { animation: fadeIn 0.45s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body class="bg-cream font-sans text-gray-800 transition-colors duration-300 dark:bg-dark dark:text-gray-100">
+
+    <nav class="sticky top-0 z-50 glass-card py-4 px-6 border-b border-gray-200 dark:border-gray-800">
+        <div class="max-w-7xl mx-auto flex justify-between items-center">
+            <div class="flex items-center gap-3">
+                <div class="bg-primary text-accent p-2 rounded-xl"><i class="fa-solid fa-mosque text-xl"></i></div>
+                <span class="font-serif text-2xl font-bold text-primary dark:text-accent">TasawufHub</span>
+            </div>
+            <div class="hidden md:flex gap-8 items-center font-medium">
+                <a href="#" class="hover:text-primary transition">Beranda</a>
+                <a href="#" class="hover:text-primary transition">Kategori</a>
+                <a href="#" class="hover:text-primary transition" onclick="openKitabView()">Kitab</a>
+                <a href="#" onclick="toggleAdmin()" class="bg-primary text-white px-6 py-2 rounded-full hover:bg-secondary transition shadow-lg">Panel Admin</a>
+                <button onclick="toggleDarkMode()" class="text-xl"><i class="fa-solid fa-moon"></i></button>
+            </div>
+        </div>
+    </nav>
+
+    <header id="homeView" class="relative hero-gradient overflow-hidden pt-16 pb-28 px-6">
+        <div class="absolute inset-0 opacity-10 islamic-pattern"></div>
+        <div class="max-w-7xl mx-auto grid md:grid-cols-2 gap-12 items-center relative z-10">
+            <div class="text-white">
+                <span class="bg-accent/20 text-accent px-4 py-1 rounded-full text-sm font-semibold mb-4 inline-block">Pusat Ilmu Spiritual</span>
+                <h1 class="text-5xl md:text-6xl font-serif font-bold mb-6 leading-tight">Kamus Lengkap <br><span class="text-accent">Ilmu Tasawuf</span></h1>
+                <p class="text-lg text-white/80 mb-8 max-w-lg">Eksplorasi istilah Tasawuf, Tarekat, Hakikat, Makrifat, Amalan, Akhlak, dan Tokoh Sufi.</p>
+                <div class="relative max-w-xl group">
+                    <input type="text" id="mainSearch" onkeyup="handleSearch(this.value)" placeholder="Cari istilah tasawuf..."
+                        class="w-full py-5 px-8 rounded-full text-gray-800 shadow-2xl text-lg focus:ring-4 focus:ring-accent/30 transition-all">
+                    <div class="absolute right-4 top-1/2 -translate-y-1/2 bg-accent text-primary w-12 h-12 flex items-center justify-center rounded-full">
+                        <i class="fa-solid fa-magnifying-glass text-xl"></i>
+                    </div>
+                    <div id="searchResult" class="absolute top-full left-0 right-0 mt-4 bg-white rounded-3xl shadow-2xl hidden overflow-hidden z-50 text-gray-800"></div>
+                </div>
+            </div>
+            <div class="hidden md:flex justify-center relative">
+                <img src="https://assets.kleap.io/37034/images/1783572995819-gb-lentera.png" alt="Illustration" class="relative z-20 w-80 drop-shadow-2xl rounded-3xl">
+            </div>
+        </div>
+    </header>
+
+    <section id="statsView" class="max-w-7xl mx-auto -mt-16 px-6 relative z-30">
+        <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
+            <div class="bg-white dark:bg-gray-800 p-6 rounded-3xl custom-shadow text-center"><h4 class="text-3xl font-bold text-primary" id="stat-istilah">0</h4><p class="text-sm text-gray-500 uppercase tracking-widest">Istilah</p></div>
+            <div class="bg-white dark:bg-gray-800 p-6 rounded-3xl custom-shadow text-center"><h4 class="text-3xl font-bold text-primary" id="stat-kitab">0</h4><p class="text-sm text-gray-500 uppercase tracking-widest">Kitab</p></div>
+            <div class="bg-white dark:bg-gray-800 p-6 rounded-3xl custom-shadow text-center"><h4 class="text-3xl font-bold text-primary" id="stat-ulama">0</h4><p class="text-sm text-gray-500 uppercase tracking-widest">Ulama</p></div>
+            <div class="bg-white dark:bg-gray-800 p-6 rounded-3xl custom-shadow text-center"><h4 class="text-3xl font-bold text-primary" id="stat-kategori">0</h4><p class="text-sm text-gray-500 uppercase tracking-widest">Kategori</p></div>
+            <div class="bg-white dark:bg-gray-800 p-6 rounded-3xl custom-shadow text-center md:col-span-1 col-span-2"><h4 class="text-3xl font-bold text-primary" id="stat-dalil">0</h4><p class="text-sm text-gray-500 uppercase tracking-widest">Dalil</p></div>
+        </div>
+    </section>
+
+    <main id="mainView" class="max-w-7xl mx-auto px-6 py-16 grid grid-cols-1 lg:grid-cols-12 gap-12">
+        <aside class="lg:col-span-3 space-y-10">
+            <div>
+                <h3 class="text-xl font-serif font-bold mb-6 flex items-center gap-3"><span class="w-2 h-8 bg-accent rounded-full"></span> Kategori Utama</h3>
+                <div class="space-y-3" id="categoryList"></div>
+            </div>
+        </aside>
+
+        <section class="lg:col-span-9">
+            <div class="flex justify-between items-center mb-8">
+                <h2 class="text-3xl font-serif font-bold">Istilah Terbaru</h2>
+                <button onclick="resetFilter()" class="px-4 py-2 rounded-xl bg-white shadow hover:bg-gray-50 text-sm">Reset Filter</button>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6" id="termsGrid"></div>
+            <div id="pagination" class="flex flex-wrap justify-center gap-2 mt-10"></div>
+        </section>
+    </main>
+
+    <section id="kitabView" class="hidden max-w-7xl mx-auto px-6 py-16">
+        <div class="flex items-center justify-between gap-4 mb-8">
+            <div>
+                <h2 class="text-3xl font-serif font-bold">Daftar Kitab</h2>
+                <p class="text-gray-500 mt-2">Klik salah satu kitab untuk melihat detailnya.</p>
+            </div>
+            <button onclick="closeKitabView()" class="px-4 py-2 rounded-xl bg-white shadow hover:bg-gray-50 text-sm">Kembali</button>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6" id="kitabGrid"></div>
+        <div id="kitabPagination" class="flex flex-wrap justify-center gap-2 mt-10"></div>
+    </section>
+
+    <footer id="footerView" class="max-w-7xl mx-auto px-6 pb-16">
+        <div class="grid md:grid-cols-2 gap-8">
+            <div class="bg-white dark:bg-gray-800 rounded-3xl p-8 custom-shadow">
+                <h3 class="text-2xl font-serif font-bold mb-4 text-primary dark:text-accent">Informasi</h3>
+                <p class="text-gray-600 dark:text-gray-300 leading-relaxed">Bila ada hal yang perlu diperbaiki, silakan hubungi admin untuk update data, koreksi istilah, atau tambahan referensi.</p>
+            </div>
+            <div class="bg-white dark:bg-gray-800 rounded-3xl p-8 custom-shadow">
+                <h3 class="text-2xl font-serif font-bold mb-4 text-primary dark:text-accent">Kalam Hikmah</h3>
+                <div id="hikmahSlide" class="transition-all duration-500 fade-item">
+                    <p class="text-lg italic text-gray-700 dark:text-gray-200" id="hikmahText"></p>
+                    <p class="mt-3 text-sm text-accent font-semibold" id="hikmahSource"></p>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <div id="detailModal" class="fixed inset-0 z-[60] bg-black/60 backdrop-blur-sm hidden flex items-center justify-center p-4">
+        <div class="bg-cream dark:bg-gray-900 w-full max-w-4xl max-h-[90vh] overflow-y-auto rounded-[32px] shadow-2xl relative">
+            <button onclick="closeModal()" class="absolute top-6 right-6 text-2xl hover:scale-110 transition"><i class="fa-solid fa-xmark"></i></button>
+            <div id="detailContent" class="p-8 md:p-12"></div>
+        </div>
+    </div>
+
+    <div id="adminLockModal" class="fixed inset-0 z-[70] bg-black/60 backdrop-blur-sm hidden flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-gray-800 w-full max-w-md rounded-3xl p-8">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-serif font-bold">Masuk Admin</h2>
+                <button onclick="closeAdminLock()" class="text-xl"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="space-y-4">
+                <input type="password" id="adminPassword" placeholder="Masukkan password" class="w-full px-4 py-3 rounded-2xl border border-gray-300 bg-white text-gray-800">
+                <button onclick="checkAdminPassword()" class="w-full py-3 bg-primary text-white rounded-2xl hover:bg-secondary transition">Masuk</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="adminModal" class="fixed inset-0 z-[60] bg-black/60 backdrop-blur-sm hidden flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-gray-800 w-full max-w-2xl rounded-3xl p-8">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-serif font-bold">Admin Dashboard</h2>
+                <button onclick="toggleAdmin()" class="text-xl"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="space-y-6">
+                <div class="border-2 border-dashed border-gray-300 rounded-3xl p-10 text-center hover:border-primary transition">
+                    <i class="fa-solid fa-cloud-arrow-up text-4xl text-gray-400 mb-4"></i>
+                    <p class="mb-4">Upload HTML / CSV data</p>
+                    <input type="file" id="csvInput" accept=".csv,.html,.txt" class="hidden">
+                    <button onclick="document.getElementById('csvInput').click()" class="bg-primary text-white px-8 py-3 rounded-full">Pilih File</button>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <button onclick="exportCSV()" class="flex items-center justify-center gap-2 p-4 bg-gray-100 rounded-2xl hover:bg-gray-200"><i class="fa-solid fa-download"></i> Export CSV</button>
+                    <button onclick="exportJSON()" class="flex items-center justify-center gap-2 p-4 bg-gray-100 rounded-2xl hover:bg-gray-200"><i class="fa-solid fa-code"></i> Export JSON</button>
+                </div>
+                <button onclick="resetDatabase()" class="w-full py-4 text-red-500 font-bold hover:bg-red-50 rounded-2xl">Hapus Semua Data Lokal</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const defaultData = [
+            { id: 1, nama: "Tasawuf", arab: "التصوف", slug: "tasawuf", kategori: "Tasawuf", definisi_singkat: "Ilmu penyucian jiwa", definisi_lengkap: "Ilmu yang membahas penyucian hati dan perjalanan menuju kedekatan dengan Allah.", dalil_quran: "QS. Asy-Syams 91:9-10", hadits: "HR. Muslim", ulama: "Al-Junaid: Tasawuf adalah mengambil setiap akhlak mulia.", kitab: "Risalah Al-Qusyairiyah", tags: [] },
+            { id: 2, nama: "Ihsan", arab: "الإحسان", slug: "ihsan", kategori: "Tasawuf", definisi_singkat: "Beribadah seolah melihat Allah", definisi_lengkap: "Tingkatan tertinggi agama yang melahirkan kesadaran akan pengawasan Allah.", dalil_quran: "QS. An-Nahl 16:90", hadits: "Hadits Jibril (HR. Muslim)", ulama: "Imam Nawawi: Ihsan adalah maqam muraqabah.", kitab: "Syarah Shahih Muslim", tags: [] },
+            { id: 3, nama: "Nafs Lawwamah", arab: "النفس اللوامة", slug: "nafs-lawwamah", kategori: "Tasawuf", definisi_singkat: "Jiwa yang mencela diri", definisi_lengkap: "Jiwa yang sadar dan menyesali kesalahan.", dalil_quran: "QS. Al-Qiyamah 75:2", hadits: "HR. Muslim", ulama: "Al-Ghazali: awal kebangkitan spiritual.", kitab: "Ihya Ulumuddin", tags: [] },
+            { id: 4, nama: "Nafs Mulhamah", arab: "النفس الملهمة", slug: "nafs-mulhamah", kategori: "Tasawuf", definisi_singkat: "Jiwa yang mendapat ilham", definisi_lengkap: "Jiwa yang mulai menerima inspirasi kebaikan.", dalil_quran: "QS. Asy-Syams 91:8", hadits: "HR. Muslim", ulama: "Tahap pertumbuhan ruhani.", kitab: "Kasyful Mahjub", tags: [] },
+            { id: 5, nama: "Nafs Muthmainnah", arab: "النفس المطمئنة", slug: "nafs-muthmainnah", kategori: "Tasawuf", definisi_singkat: "Jiwa yang tenang", definisi_lengkap: "Jiwa yang tenteram dalam mengingat Allah.", dalil_quran: "QS. Al-Fajr 89:27", hadits: "HR. Muslim", ulama: "Tujuan tazkiyatun nafs.", kitab: "Ihya Ulumuddin", tags: [] }
+        ];
+
+        const kamus = {
+            "Yaqzhah": "اليقظة",
+            "Hudhur": "الحضور",
+            "Muraqabah": "المراقبة",
+            "Muhasabah": "المحاسبة",
+            "Tazkiyatun Nafs": "تزكية النفس",
+            "Mujahadah": "المجاهدة",
+            "Takhalli": "التخلي",
+            "Tahalli": "التحلي",
+            "Tajalli": "التجلي",
+            "Fana": "الفناء",
+            "Baqa": "البقاء",
+            "Mahabbah": "المحبة",
+            "Makrifat": "المعرفة",
+            "Tarekat": "الطريقة",
+            "Hakikat": "الحقيقة",
+            "Dzikir": "الذكر",
+            "Tasawuf": "التصوف",
+            "Nafs Lawwamah": "النفس اللوامة",
+            "Nafs Mulhamah": "النفس الملهمة",
+            "Nafs Muthmainnah": "النفس المطمئنة",
+            "Nafs Ammarah": "النفس الأمارة",
+            "Nafs Radhiyah": "النفس الراضية",
+            "Nafs Mardhiyyah": "النفس المرضية",
+            "Nafs Kamilah": "النفس الكاملة"
+        };
+
+        const rawHtmlData = `<table border="1" cellpadding="5" cellspacing="0"><tr><td>Tasawuf;??????;Tasawuf;Ilmu penyucian jiwa;Ilmu yang membahas penyucian hati dan perjalanan menuju kedekatan dengan Allah.;QS. Asy-Syams 91:9-10;HR. Muslim;Al-Junaid: Tasawuf adalah mengambil setiap akhlak mulia.;Risalah Al-Qusyairiyah</td></tr><tr><td>Ihsan;???????;Tasawuf;Beribadah seolah melihat Allah;Tingkatan tertinggi agama yang melahirkan kesadaran akan pengawasan Allah.;QS. An-Nahl 16:90;Hadits Jibril (HR. Muslim);Imam Nawawi: Ihsan adalah maqam muraqabah.;Syarah Shahih Muslim</td></tr><tr><td>Nafs Lawwamah;????? ???????;Tasawuf;Jiwa yang mencela diri;Jiwa yang sadar dan menyesali kesalahan.;QS. Al-Qiyamah 75:2;HR. Muslim;Al-Ghazali: awal kebangkitan spiritual.;Ihya Ulumuddin</td></tr><tr><td>Nafs Mulhamah;????? ???????;Tasawuf;Jiwa yang mendapat ilham;Jiwa yang mulai menerima inspirasi kebaikan.;QS. Asy-Syams 91:8;HR. Muslim;Tahap pertumbuhan ruhani.;Kasyful Mahjub</td></tr><tr><td>Nafs Muthmainnah;????? ????????;Tasawuf;Jiwa yang tenang;Jiwa yang tenteram dalam mengingat Allah.;QS. Al-Fajr 89:27;HR. Muslim;Tujuan tazkiyatun nafs.;Ihya Ulumuddin</td></tr></table>`;
+
+        const storageKey = 'tasawuf_db';
+        let database = loadDatabase();
+        let currentView = [];
+        let filteredBase = [];
+        let currentPage = 1;
+        const perPage = 10;
+        let kitabPage = 1;
+        const kitabPerPage = 8;
+        let kitabBase = [];
+
+        const ADMIN_PASSWORD = 'hu4111';
+        let adminUnlocked = false;
+
+        const hikmahList = [
+            { text: "Barangsiapa mengenal dirinya, maka ia akan mengenal Tuhannya.", source: "Kalam Hikmah" },
+            { text: "Hati yang bersih lebih dekat kepada cahaya petunjuk.", source: "Tasawuf" },
+            { text: "Diam adalah penjaga hati dari banyak kelalaian.", source: "Hikmah Sufi" }
+        ];
+        let hikmahIndex = 0;
+
+        window.addEventListener('load', () => {
+            syncCollections();
+            filteredBase = [...database.istilah];
+            currentView = paginate(filteredBase, currentPage);
+            renderAll();
+            document.getElementById('csvInput').addEventListener('change', handleFileImport);
+            startHikmahSlide();
+        });
+
+        function loadDatabase() {
+            const saved = localStorage.getItem(storageKey);
+            if (saved) {
+                try {
+                    const parsed = JSON.parse(saved);
+                    return {
+                        istilah: Array.isArray(parsed.istilah) ? parsed.istilah : [],
+                        kategori: Array.isArray(parsed.kategori) ? parsed.kategori : [],
+                        kitab: Array.isArray(parsed.kitab) ? parsed.kitab : [],
+                        ulama: Array.isArray(parsed.ulama) ? parsed.ulama : []
+                    };
+                } catch (e) {}
+            }
+            return { istilah: [...defaultData], kategori: [], kitab: [], ulama: [] };
+        }
+
+        function saveDatabase() {
+            localStorage.setItem(storageKey, JSON.stringify(database));
+        }
+
+        function parseRawHtmlData(html) {
+            const rows = [];
+            const trMatches = html.match(/<tr[\s\S]*?<\/tr>/gi) || [];
+            trMatches.forEach(tr => {
+                const tds = [...tr.matchAll(/<td[^>]*>([\s\S]*?)<\/td>/gi)].map(m => decodeHtml(m[1].trim()));
+                if (!tds.length) return;
+                const joined = tds.join(';').split(';').map(s => s.trim()).filter(Boolean);
+                if (joined.length < 9) return;
+                rows.push({
+                    id: Date.now() + rows.length + Math.floor(Math.random() * 1000),
+                    nama: joined[0] || '-',
+                    arab: cleanArabic(joined[1] || ''),
+                    slug: slugify(joined[0] || ''),
+                    kategori: joined[2] || '-',
+                    definisi_singkat: joined[3] || '-',
+                    definisi_lengkap: joined.slice(4, joined.length - 4).join(';') || '-',
+                    dalil_quran: joined[joined.length - 4] || '-',
+                    hadits: joined[joined.length - 3] || '-',
+                    ulama: joined[joined.length - 2] || '-',
+                    kitab: joined[joined.length - 1] || '-',
+                    tags: []
+                });
+            });
+            return rows;
+        }
+
+        function cleanArabic(text) {
+            const t = String(text || '').trim().replace(/\?+/g, '');
+            if (!t) return '';
+            return t;
+        }
+
+        function decodeHtml(str) { const txt = document.createElement('textarea'); txt.innerHTML = str; return txt.value; }
+        function slugify(text) {
+            return String(text || '').toLowerCase().trim().replace(/['"]/g, '').replace(/\s+/g, '-').replace(/[^a-z0-9\-]/g, '');
+        }
+        function syncCollections() {
+            database.kategori = [...new Set(database.istilah.map(i => i.kategori).filter(Boolean))];
+            database.kitab = [...new Set(database.istilah.map(i => i.kitab).filter(Boolean))];
+            database.ulama = [...new Set(database.istilah.map(i => i.ulama).filter(Boolean))];
+            saveDatabase();
+        }
+        function renderAll() { renderStats(); renderCategories(); renderTerms(currentView); renderPagination(); renderKitabList(); }
+
+        function renderStats() {
+            const uniqueKitab = [...new Set(database.istilah.map(i => i.kitab).filter(Boolean))];
+            const uniqueUlama = [...new Set(database.istilah.map(i => i.ulama).filter(Boolean))];
+            const uniqueKategori = [...new Set(database.istilah.map(i => i.kategori).filter(Boolean))];
+            const countDalil = database.istilah.filter(i => i.dalil_quran && i.dalil_quran.trim() !== '-' && i.dalil_quran.trim() !== '').length;
+            document.getElementById('stat-istilah').innerText = database.istilah.length;
+            document.getElementById('stat-kitab').innerText = uniqueKitab.length;
+            document.getElementById('stat-ulama').innerText = uniqueUlama.length;
+            document.getElementById('stat-kategori').innerText = uniqueKategori.length;
+            document.getElementById('stat-dalil').innerText = countDalil;
+        }
+
+        function replaceArabicOnlyForTerms(text) {
+            let result = text || '';
+            for (const [indo, arab] of Object.entries(kamus)) {
+                if (result.includes(indo)) result = result.replace(new RegExp(indo, 'g'), `${indo} (${arab})`);
+            }
+            return result.replace(/\?+/g, '');
+        }
+
+        function renderCategories() {
+            const allCategories = [...new Set(database.istilah.map(i => i.kategori).filter(Boolean))];
+            document.getElementById('categoryList').innerHTML = allCategories.map(cat => `
+                <button onclick="filterByCategory('${escapeQuotes(cat)}')" class="w-full flex items-center justify-between p-4 bg-white dark:bg-gray-800 rounded-2xl hover:bg-primary hover:text-white transition group shadow-sm">
+                    <span>${cat}</span><i class="fa-solid fa-chevron-right text-xs opacity-0 group-hover:opacity-100"></i>
+                </button>
+            `).join('');
+        }
+
+        function renderTerms(data) {
+            const container = document.getElementById('termsGrid');
+            if (!data || data.length === 0) {
+                container.innerHTML = `<div class="col-span-full py-12 text-center opacity-50">Tidak ada data ditemukan.</div>`;
+                return;
+            }
+            container.innerHTML = data.map(item => `
+                <div class="fade-item bg-transparent border-b border-gray-200 dark:border-gray-700 py-4 px-1 cursor-pointer hover:bg-white/40 dark:hover:bg-gray-800/40 rounded-2xl" onclick="showDetail(${item.id})">
+                    <div class="flex items-start justify-between gap-4">
+                        <div>
+                            <h3 class="text-xl md:text-2xl font-serif font-bold text-primary dark:text-accent">${replaceArabicOnlyForTerms(item.nama || '-')}</h3>
+                            <p class="text-sm text-gray-500 mt-1">${item.kategori || '-'}</p>
+                        </div>
+                        <div class="arabic-text text-lg md:text-2xl text-primary dark:text-accent ${item.arab ? '' : 'hidden'}">${item.arab || ''}</div>
+                    </div>
+                    <p class="mt-3 text-gray-700 dark:text-gray-300 line-clamp-2">${item.definisi_singkat || '-'}</p>
+                </div>
+            `).join('');
+        }
+
+        function getKitabList() {
+            return [...new Set(database.istilah.map(i => i.kitab).filter(Boolean))];
+        }
+
+        function renderKitabList() {
+            const container = document.getElementById('kitabGrid');
+            const kitabList = getKitabList();
+            kitabBase = kitabList;
+            const totalPages = Math.max(1, Math.ceil(kitabBase.length / kitabPerPage));
+            if (kitabPage > totalPages) kitabPage = totalPages;
+            const start = (kitabPage - 1) * kitabPerPage;
+            const pageItems = kitabBase.slice(start, start + kitabPerPage);
+
+            if (!container) return;
+            if (!kitabList.length) {
+                container.innerHTML = `<div class="col-span-full py-12 text-center opacity-50">Tidak ada data kitab ditemukan.</div>`;
+                document.getElementById('kitabPagination').innerHTML = '';
+                return;
+            }
+
+            container.innerHTML = pageItems.map(kitab => {
+                const related = database.istilah.filter(i => i.kitab === kitab);
+                const first = related[0] || {};
+                return `
+                    <div class="bg-white dark:bg-gray-800 rounded-3xl p-6 custom-shadow border border-gray-100 dark:border-gray-700">
+                        <div class="flex items-start justify-between gap-4 mb-4">
+                            <div>
+                                <h3 class="text-xl font-serif font-bold text-primary dark:text-accent">${kitab}</h3>
+                                <p class="text-sm text-gray-500 mt-1">${related.length} istilah terkait</p>
+                            </div>
+                            <button onclick="openKitabDetail('${escapeQuotes(kitab)}')" class="px-4 py-2 rounded-full bg-primary text-white text-sm hover:bg-secondary transition">Detail</button>
+                        </div>
+                        <p class="text-sm text-gray-600 dark:text-gray-300 line-clamp-3">${first.ulama || '-'}<br>${first.kategori || '-'}</p>
+                    </div>
+                `;
+            }).join('');
+
+            renderKitabPagination(totalPages);
+        }
+
+        function renderKitabPagination(totalPages) {
+            const container = document.getElementById('kitabPagination');
+            if (!container) return;
+            if (totalPages <= 1) {
+                container.innerHTML = '';
+                return;
+            }
+            let buttons = '';
+            for (let i = 1; i <= totalPages; i++) {
+                buttons += `<button onclick="goToKitabPage(${i})" class="px-4 py-2 rounded-xl border ${i === kitabPage ? 'bg-primary text-white border-primary' : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700'}">${i}</button>`;
+            }
+            container.innerHTML = buttons;
+        }
+
+        function goToKitabPage(page) {
+            kitabPage = page;
+            renderKitabList();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function openKitabView() {
+            document.getElementById('homeView').classList.add('hidden');
+            document.getElementById('statsView').classList.add('hidden');
+            document.getElementById('mainView').classList.add('hidden');
+            document.getElementById('footerView').classList.add('hidden');
+            document.getElementById('kitabView').classList.remove('hidden');
+            renderKitabList();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function closeKitabView() {
+            document.getElementById('kitabView').classList.add('hidden');
+            document.getElementById('homeView').classList.remove('hidden');
+            document.getElementById('statsView').classList.remove('hidden');
+            document.getElementById('mainView').classList.remove('hidden');
+            document.getElementById('footerView').classList.remove('hidden');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function openKitabDetail(kitab) {
+            const related = database.istilah.filter(i => i.kitab === kitab);
+            if (!related.length) return;
+            const first = related[0];
+            document.getElementById('detailContent').innerHTML = `
+                <div class="mb-8">
+                    <nav class="flex gap-2 text-sm text-gray-400 mb-6">
+                        <span>Beranda</span><span>/</span><span>Kitab</span><span>/</span><span class="text-primary font-bold">${kitab}</span>
+                    </nav>
+                    <h1 class="text-5xl font-serif font-bold">${kitab}</h1>
+                </div>
+                <div class="grid md:grid-cols-3 gap-8">
+                    <div class="md:col-span-2 space-y-8">
+                        <div class="bg-white dark:bg-gray-800 p-8 rounded-3xl">
+                            <h4 class="text-lg font-bold mb-4 flex items-center gap-2"><i class="fa-solid fa-book-open text-primary"></i> Daftar Istilah Terkait</h4>
+                            <div class="space-y-4">
+                                ${related.map(item => `
+                                    <div class="border-b border-gray-200 dark:border-gray-700 pb-4 cursor-pointer" onclick="showDetail(${item.id})">
+                                        <div class="font-semibold text-primary dark:text-accent">${replaceArabicOnlyForTerms(item.nama || '-')}</div>
+                                        <div class="text-sm text-gray-500">${item.definisi_singkat || '-'}</div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="space-y-6">
+                        <div class="bg-white dark:bg-gray-800 p-6 rounded-3xl border border-accent/20">
+                            <h4 class="font-bold mb-4">Informasi Kitab</h4>
+                            <p class="text-sm text-gray-500">Jumlah Istilah:</p>
+                            <p class="font-medium mb-4">${related.length}</p>
+                            <p class="text-sm text-gray-500">Ulama:</p>
+                            <p class="font-medium mb-4">${first.ulama || '-'}</p>
+                            <p class="text-sm text-gray-500">Kategori:</p>
+                            <p class="font-medium">${first.kategori || '-'}</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+            document.getElementById('detailModal').classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function paginate(list, page) {
+            const start = (page - 1) * perPage;
+            return list.slice(start, start + perPage);
+        }
+
+        function renderPagination() {
+            const totalPages = Math.max(1, Math.ceil(filteredBase.length / perPage));
+            const container = document.getElementById('pagination');
+            if (totalPages <= 1) {
+                container.innerHTML = '';
+                return;
+            }
+            let buttons = '';
+            for (let i = 1; i <= totalPages; i++) {
+                buttons += `<button onclick="goToPage(${i})" class="px-4 py-2 rounded-xl border ${i === currentPage ? 'bg-primary text-white border-primary' : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700'}">${i}</button>`;
+            }
+            container.innerHTML = buttons;
+        }
+
+        function goToPage(page) {
+            currentPage = page;
+            currentView = paginate(filteredBase, currentPage);
+            renderTerms(currentView);
+            renderPagination();
+        }
+
+        function handleSearch(val) {
+            const query = (val || '').toLowerCase().trim();
+            filteredBase = query ? database.istilah.filter(i => (i.nama || '').toLowerCase().includes(query) || (i.kategori || '').toLowerCase().includes(query)) : [...database.istilah];
+            currentPage = 1;
+            currentView = paginate(filteredBase, currentPage);
+            const searchBox = document.getElementById('searchResult');
+            if (query.length > 1) {
+                searchBox.classList.remove('hidden');
+                const results = filteredBase.slice(0, 5);
+                searchBox.innerHTML = results.length ? results.map(i => `
+                    <div class="p-4 hover:bg-gray-50 cursor-pointer border-b" onclick="showDetail(${i.id})">
+                        <div class="font-bold">${replaceArabicOnlyForTerms(i.nama || '-')}</div>
+                        <div class="text-xs text-gray-500">${i.kategori || '-'} • ${i.definisi_singkat || '-'}</div>
+                    </div>
+                `).join('') : '<div class="p-4 text-center">Tidak ditemukan</div>';
+            } else {
+                searchBox.classList.add('hidden');
+            }
+            renderTerms(currentView);
+            renderPagination();
+        }
+
+        function filterByCategory(cat) {
+            filteredBase = database.istilah.filter(i => i.kategori === cat);
+            currentPage = 1;
+            currentView = paginate(filteredBase, currentPage);
+            renderTerms(currentView);
+            renderPagination();
+        }
+
+        function resetFilter() {
+            filteredBase = [...database.istilah];
+            currentPage = 1;
+            currentView = paginate(filteredBase, currentPage);
+            document.getElementById('mainSearch').value = '';
+            document.getElementById('searchResult').classList.add('hidden');
+            renderTerms(currentView);
+            renderPagination();
+        }
+
+        function showDetail(id) {
+            const item = database.istilah.find(i => i.id === id);
+            if (!item) return;
+            document.getElementById('detailContent').innerHTML = `
+                <div class="mb-8">
+                    <nav class="flex gap-2 text-sm text-gray-400 mb-6"><span>Beranda</span><span>/</span><span>${item.kategori || '-'}</span><span>/</span><span class="text-primary font-bold">${replaceArabicOnlyForTerms(item.nama || '-')}</span></nav>
+                    <div class="flex flex-wrap justify-between items-center gap-4"><h1 class="text-5xl font-serif font-bold">${replaceArabicOnlyForTerms(item.nama || '-')}</h1></div>
+                </div>
+                <div class="text-center py-12 bg-white dark:bg-gray-800 rounded-3xl mb-10 shadow-sm">
+                    <div class="arabic-text text-7xl text-primary mb-4">${item.arab || ''}</div>
+                    <div class="text-accent font-serif">${replaceArabicOnlyForTerms(item.nama || '-')}</div>
+                </div>
+                <div class="grid md:grid-cols-3 gap-8">
+                    <div class="md:col-span-2 space-y-8">
+                        <div class="bg-white dark:bg-gray-800 p-8 rounded-3xl"><h4 class="text-lg font-bold mb-4 flex items-center gap-2"><i class="fa-solid fa-book-open text-primary"></i> Definisi Lengkap</h4><p class="leading-relaxed text-lg">${item.definisi_lengkap || '-'}</p></div>
+                        <div class="bg-primary text-white p-8 rounded-3xl"><h4 class="text-lg font-bold mb-4 flex items-center gap-2"><i class="fa-solid fa-quran text-accent"></i> Dalil Al-Quran</h4><p class="italic">"${item.dalil_quran || '-'}"</p></div>
+                    </div>
+                    <div class="space-y-6">
+                        <div class="bg-white dark:bg-gray-800 p-6 rounded-3xl border border-accent/20"><h4 class="font-bold mb-4">Informasi</h4><p class="text-sm text-gray-500">Hadits:</p><p class="font-medium mb-4">${item.hadits || '-'}</p><p class="text-sm text-gray-500">Ulama:</p><p class="font-medium mb-4">${item.ulama || '-'}</p><p class="text-sm text-gray-500">Kitab:</p><p class="font-medium">${item.kitab || '-'}</p></div>
+                    </div>
+                </div>`;
+            document.getElementById('detailModal').classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeModal() { document.getElementById('detailModal').classList.add('hidden'); document.body.style.overflow = 'auto'; }
+        function closeAdminLock() { document.getElementById('adminLockModal').classList.add('hidden'); document.getElementById('adminPassword').value = ''; }
+        function toggleAdmin() {
+            if (!adminUnlocked) {
+                document.getElementById('adminLockModal').classList.remove('hidden');
+                return;
+            }
+            document.getElementById('adminModal').classList.toggle('hidden');
+        }
+        function checkAdminPassword() {
+            const pass = document.getElementById('adminPassword').value || '';
+            if (pass === ADMIN_PASSWORD) {
+                adminUnlocked = true;
+                closeAdminLock();
+                document.getElementById('adminModal').classList.remove('hidden');
+            } else {
+                alert('Password salah');
+            }
+        }
+        function toggleDarkMode() { document.documentElement.classList.toggle('dark'); }
+
+        function startHikmahSlide() {
+            const textEl = document.getElementById('hikmahText');
+            const sourceEl = document.getElementById('hikmahSource');
+            setInterval(() => {
+                hikmahIndex = (hikmahIndex + 1) % hikmahList.length;
+                document.getElementById('hikmahSlide').classList.remove('fade-item');
+                void document.getElementById('hikmahSlide').offsetWidth;
+                document.getElementById('hikmahSlide').classList.add('fade-item');
+                textEl.innerText = hikmahList[hikmahIndex].text;
+                sourceEl.innerText = hikmahList[hikmahIndex].source;
+            }, 4000);
+            textEl.innerText = hikmahList[0].text;
+            sourceEl.innerText = hikmahList[0].source;
+        }
+
+        function handleFileImport(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(ev) {
+                const text = ev.target.result || '';
+                const parsed = parseRawHtmlData(text);
+                if (parsed.length) {
+                    database.istilah = [...database.istilah, ...parsed];
+                    dedupeDatabase();
+                    syncCollections();
+                    filteredBase = [...database.istilah];
+                    currentPage = 1;
+                    currentView = paginate(filteredBase, currentPage);
+                    renderAll();
+                    saveDatabase();
+                    alert('Data berhasil ditambahkan dan disimpan permanen!');
+                } else {
+                    alert('Data tidak terbaca. Pastikan format tabel HTML Anda benar.');
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        function dedupeDatabase() {
+            const seen = new Set();
+            database.istilah = database.istilah.filter(item => {
+                const key = `${item.nama}|${item.kategori}|${item.kitab}|${item.ulama}`;
+                if (seen.has(key)) return false;
+                seen.add(key);
+                return true;
+            });
+        }
+
+        function exportCSV() { downloadFile(Papa.unparse(database.istilah), 'tasawuf_export.csv', 'text/csv'); }
+        function exportJSON() { downloadFile(JSON.stringify(database, null, 2), 'tasawuf_export.json', 'application/json'); }
+
+        function downloadFile(content, fileName, contentType) {
+            const a = document.createElement("a");
+            a.href = URL.createObjectURL(new Blob([content], { type: contentType }));
+            a.download = fileName;
+            a.click();
+        }
+
+        function resetDatabase() {
+            if (confirm('Hapus semua data lokal?')) {
+                localStorage.removeItem(storageKey);
+                location.reload();
+            }
+        }
+
+        function escapeQuotes(text) { return String(text).replace(/'/g, "\\'"); }
+    </script>
+</body>
+</html>
